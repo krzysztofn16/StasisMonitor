@@ -18,12 +18,12 @@ init_db()
 
 # ── Konfiguracja strony ───────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Fund Tracker",
+    page_title="MarketSTI Monitor",
     page_icon="📊",
     layout="wide"
 )
 
-st.title("📊 Fund Tracker")
+st.title("📊 MarketSTI Monitor")
 
 # ── Pobierz dane ──────────────────────────────────────────────────────────────
 transactions_df = get_transactions("default")

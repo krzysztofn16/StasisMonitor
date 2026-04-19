@@ -1,2 +1,2 @@
-# StasisMonitor
+# MarketSTIMonitor
 Aplikacja monitorująca fundusz STI
