@@ -1,0 +1,4 @@
+data/investments.db
+__pycache__/
+*.pyc
+.env
