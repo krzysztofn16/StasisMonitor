@@ -1,4 +1,116 @@
-from backend.database.db import init_db
+import streamlit as st
+import plotly.express as px
+import pandas as pd
 
-# Uruchom przy każdym starcie — bezpieczne bo używamy IF NOT EXISTS
+import sys
+import os
+
+# Dodaj główny folder projektu do Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.database.db import init_db
+from backend.services.transactions import get_transactions
+from backend.services.prices import get_price_history, get_latest_price
+from backend.services.portfolio import get_portfolio_summary, get_portfolio_history
+
+# ── Inicjalizacja bazy przy każdym starcie ────────────────────────────────────
 init_db()
+
+# ── Konfiguracja strony ───────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="Fund Tracker",
+    page_icon="📊",
+    layout="wide"
+)
+
+st.title("📊 Fund Tracker")
+
+# ── Pobierz dane ──────────────────────────────────────────────────────────────
+transactions_df = get_transactions("default")
+latest_price, latest_date = get_latest_price("3965.n")
+
+# ── Obsługa pustej bazy ───────────────────────────────────────────────────────
+if transactions_df.empty:
+    st.info("Nie masz jeszcze żadnych transakcji. Przejdź do strony **Transakcje** żeby dodać pierwszą, albo zaimportuj plik CSV.")
+    st.stop()
+
+# ── Oblicz statystyki ─────────────────────────────────────────────────────────
+summary = get_portfolio_summary(transactions_df, latest_price)
+
+# ── 4 metryki ─────────────────────────────────────────────────────────────────
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric(
+    label="Wartość portfela",
+    value=f"{summary['current_value']:,.2f} PLN"
+)
+col2.metric(
+    label="Zysk / Strata",
+    value=f"{summary['profit_pln']:,.2f} PLN",
+    delta=f"{summary['profit_pct']:.2f}%"
+)
+col3.metric(
+    label="Zainwestowano",
+    value=f"{summary['total_invested']:,.2f} PLN"
+)
+col4.metric(
+    label="Ostatnia wycena",
+    value=f"{latest_price:.2f} PLN",
+    delta=latest_date
+)
+
+st.divider()
+
+# ── Wykres z przełącznikiem okresu ────────────────────────────────────────────
+st.subheader("Wartość portfela w czasie")
+
+period = st.radio(
+    label="Okres",
+    options=["1M", "3M", "6M", "1Y", "2Y", "MAX"],
+    index=3,          # domyślnie 1Y
+    horizontal=True
+)
+
+prices_df = get_price_history("3965.n", period=period)
+history_df = get_portfolio_history(transactions_df, prices_df)
+
+if not history_df.empty:
+    fig = px.line(
+        history_df,
+        x="date",
+        y="value",
+        labels={"date": "", "value": "Wartość (PLN)"},
+    )
+    fig.update_traces(line_color="#2E75B6", line_width=2)
+    fig.update_layout(
+        hovermode="x unified",
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+
+# ── Tabela podsumowania funduszu ──────────────────────────────────────────────
+st.subheader("Podsumowanie")
+
+summary_table = pd.DataFrame([{
+    "Fundusz":           "Generali Stabilny Wzrost",
+    "Jednostki":         f"{summary['units_held']:.4f}",
+    "Śr. cena zakupu":   f"{summary['avg_buy_price']:.2f} PLN",
+    "Aktualna cena":     f"{summary['latest_price']:.2f} PLN",
+    "Wartość":           f"{summary['current_value']:,.2f} PLN",
+    "Zysk / Strata":     f"{summary['profit_pln']:,.2f} PLN ({summary['profit_pct']:.2f}%)",
+}])
+
+st.dataframe(summary_table, use_container_width=True, hide_index=True)
+
+# ── Eksport CSV ───────────────────────────────────────────────────────────────
+st.divider()
+
+csv = transactions_df.to_csv(index=False)
+st.download_button(
+    label="📥 Eksportuj transakcje CSV",
+    data=csv,
+    file_name="fund_tracker_backup.csv",
+    mime="text/csv"
+)
