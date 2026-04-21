@@ -28,3 +28,11 @@ CREATE TABLE IF NOT EXISTS transactions (
 -- Fundusze dostępne na platformie (uzupełniasz Ty jako deweloper)
 INSERT OR IGNORE INTO funds (code, name, stooq_ticker, analizy_code)
 VALUES ('UNI23', 'Generali Stabilny Wzrost', '3965.n', 'UNI23');
+
+-- Tabela uytkowników (nick + pin)
+CREATE TABLE IF NOT EXISTS users (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    username    TEXT    NOT NULL UNIQUE,
+    pin         TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+)

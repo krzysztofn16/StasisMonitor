@@ -7,15 +7,30 @@ import pandas as pd
 
 from backend.database.db import init_db, get_connection
 from backend.services.transactions import get_transactions, add_transaction
+from backend.services.auth import get_current_user, show_auth_page, logout
 
 # ── Init ──────────────────────────────────────────────────────────────────────
 init_db()
 
+user_id = get_current_user()
+if user_id is None:
+    show_auth_page()
+    st.stop()
+
 st.set_page_config(page_title="Import — MarketSTI Monitor", page_icon="📂", layout="wide")
 st.title("📂 Import transakcji")
 
+# ── Sidebar — info o użytkowniku ──────────────────────────────────────────────
+with st.sidebar:
+    st.markdown(f"👤 **{user_id}**")
+    if st.button("Wyloguj", use_container_width=True):
+        logout()
+    st.divider()
+    st.markdown("[📝 Prześlij feedback](https://forms.google.com/))")
+    st.markdown("[☕ Postaw kawę](https://buymeacoffee.com/)")
+
 # ── Metryki podsumowujące ─────────────────────────────────────────────────────
-transactions_df = get_transactions("default")
+transactions_df = get_transactions(user_id) #get_transactions("default")
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Transakcji w bazie", len(transactions_df))
@@ -187,7 +202,7 @@ if uploaded_file is not None:
 
         else:
             # Wykryj duplikaty
-            existing_df = get_transactions("default")
+            existing_df = get_transactions(user_id) #get_transactions("default")
             duplicates = 0
 
             if not existing_df.empty:

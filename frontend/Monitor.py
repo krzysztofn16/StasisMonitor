@@ -12,6 +12,7 @@ from backend.database.db import init_db
 from backend.services.transactions import get_transactions
 from backend.services.prices import get_price_history, get_latest_price
 from backend.services.portfolio import get_portfolio_summary, get_portfolio_history
+from backend.services.auth import get_current_user, show_auth_page, logout
 
 # ── Inicjalizacja bazy przy każdym starcie ────────────────────────────────────
 init_db()
@@ -23,10 +24,25 @@ st.set_page_config(
     layout="wide"
 )
 
+# ── Auth — jeśli nie zalogowany pokaż ekran logowania ────────────────────────
+user_id = get_current_user()
+if user_id is None:
+    show_auth_page()
+    st.stop()
+
+# ── Sidebar — info o użytkowniku ──────────────────────────────────────────────
+with st.sidebar:
+    st.markdown(f"👤 **{user_id}**")
+    if st.button("wyloguj", use_container_width=True):
+        logout()
+    st.divider()
+    st.markdown("[📝 Prześlij feedback](https://forms.google.com/)")
+    st.markdown("[☕ Postaw kawę](https://buymeacoffee.com/)")
+
 st.title("📊 MarketSTI Monitor")
 
 # ── Pobierz dane ──────────────────────────────────────────────────────────────
-transactions_df = get_transactions("default")
+transactions_df = get_transactions(user_id) #get_transactions("default")
 latest_price, latest_date = get_latest_price("3965.n")
 
 # ── Obsługa pustej bazy ───────────────────────────────────────────────────────
@@ -73,6 +89,17 @@ period = st.radio(
 
 prices_df = get_price_history("3965.n", period=period)
 history_df = get_portfolio_history(transactions_df, prices_df)
+
+st.write("Transakcje:")
+st.write(transactions_df[["date", "type", "units"]].head())
+st.write(f"Typ daty transakcji: {transactions_df['date'].dtype}")
+
+st.write("Ceny:")
+st.write(prices_df[["date", "price"]].head())
+st.write(f"Typ daty cen: {prices_df['date'].dtype}")
+
+st.write("Historia:")
+st.write(history_df.head())
 
 if not history_df.empty:
     fig = px.line(

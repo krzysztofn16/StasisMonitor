@@ -10,15 +10,30 @@ from backend.database.db import init_db, get_connection
 from backend.services.transactions import get_transactions, add_transaction, delete_transaction
 from backend.services.prices import get_latest_price
 from backend.services.portfolio import get_portfolio_summary
+from backend.services.auth import get_current_user, show_auth_page, logout
 
 # ── Init ──────────────────────────────────────────────────────────────────────
 init_db()
 
+user_id = get_current_user()
+if user_id is None:
+    show_auth_page()
+    st.stop()
+
 st.set_page_config(page_title="Transakcje — MarketSTI Monitor", page_icon="📋", layout="wide")
 st.title("📋 Transakcje")
 
+# ── Sidebar — info o użytkowniku ──────────────────────────────────────────────
+with st.sidebar:
+    st.markdown(f"👤 **{user_id}**")
+    if st.button("Wyloguj", use_container_width=True):
+        logout()
+    st.divider()
+    st.markdown("[📝 Prześlij feedback](https://forms.google.com/)")
+    st.markdown("[☕ Postaw kawę](https://buymeacoffee.com/)")
+
 # ── Pobierz dane ──────────────────────────────────────────────────────────────
-transactions_df = get_transactions("default")
+transactions_df = get_transactions(user_id) #get_transactions("default")
 latest_price, latest_date = get_latest_price("3965.n")
 
 # ── Metryki podsumowujące ─────────────────────────────────────────────────────
@@ -119,7 +134,7 @@ with col_form:
                 st.error("Cena jednostki musi być większa niż 0.")
             elif transaction_type == "SELL":
                 # Sprawdź czy masz wystarczająco jednostek do sprzedaży
-                current_txns = get_transactions("default")
+                current_txns = get_transactions(user_id) #get_transactions("default")
                 if not current_txns.empty:
                     bought = current_txns[current_txns["type"] == "BUY"]["units"].sum()
                     sold   = current_txns[current_txns["type"] == "SELL"]["units"].sum()
@@ -131,7 +146,7 @@ with col_form:
                     st.error(f"Nie możesz sprzedać {units:.3f} jednostek — posiadasz tylko {available:.3f}.")
                 else:
                     add_transaction(
-                        user_id="default",
+                        user_id=user_id,
                         fund_code=selected_fund_code,
                         type=transaction_type,
                         date=str(transaction_date),
@@ -143,7 +158,7 @@ with col_form:
                     st.rerun()
             else:
                 add_transaction(
-                    user_id="default",
+                    user_id=user_id,
                     fund_code=selected_fund_code,
                     type=transaction_type,
                     date=str(transaction_date),

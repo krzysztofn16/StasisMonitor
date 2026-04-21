@@ -59,6 +59,9 @@ def get_portfolio_history(transactions_df: pd.DataFrame, prices_df: pd.DataFrame
     transactions_df = transactions_df.copy()
     transactions_df["date"] = pd.to_datetime(transactions_df["date"])
 
+    prices_df = prices_df.copy()
+    prices_df["date"] = pd.to_datetime(prices_df["date"])
+
     rows = []
     for _, price_row in prices_df.iterrows():
         day = price_row["date"]
