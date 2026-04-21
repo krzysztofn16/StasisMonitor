@@ -67,7 +67,7 @@ st.subheader("Wartość portfela w czasie")
 period = st.radio(
     label="Okres",
     options=["1M", "3M", "6M", "1Y", "2Y", "MAX"],
-    index=3,          # domyślnie 1Y
+    index=0,          # domyślnie 1M
     horizontal=True
 )
 
