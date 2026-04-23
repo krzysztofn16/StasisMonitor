@@ -38,7 +38,7 @@ with st.sidebar:
         logout()
     st.divider()
     st.markdown("[📝 Prześlij feedback](https://forms.google.com/)")
-    st.markdown("[☕ Postaw kawę](https://buymeacoffee.com/)")
+    st.markdown("[☕ Postaw kawę zeby to rozwijać po godzinach 😏](https://buymeacoffee.com/)")
 
 st.title("📊 MarketSTI Monitor")
 

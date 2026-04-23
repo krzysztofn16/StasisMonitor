@@ -35,10 +35,11 @@ with st.sidebar:
 # ── Pobierz dane ──────────────────────────────────────────────────────────────
 transactions_df = get_transactions(user_id)
 
-# Ceny per fundusz — używane w podpowiedzi formularza i metrykach
+# Ceny tylko dla posiadanych funduszy — nie odpytujemy Stooq dla funduszy bez transakcji
+held_codes = set(transactions_df["fund_code"].unique()) if not transactions_df.empty else set()
 fund_price_lookup: dict[str, tuple[float, str]] = {}
 for f in get_all_funds():
-    if f["stooq_ticker"]:
+    if f["stooq_ticker"] and f["code"] in held_codes:
         price, date_ = get_latest_price(f["stooq_ticker"])
         fund_price_lookup[f["code"]] = (price, date_)
 
