@@ -6,7 +6,7 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
-from backend.database.db import init_db, get_connection
+from backend.database.db import init_db, get_all_funds
 from backend.services.transactions import get_transactions, add_transaction, delete_transaction
 from backend.services.prices import get_latest_price
 from backend.services.portfolio import get_portfolio_summary
@@ -33,24 +33,33 @@ with st.sidebar:
     st.markdown("[☕ Postaw kawę](https://buymeacoffee.com/)")
 
 # ── Pobierz dane ──────────────────────────────────────────────────────────────
-transactions_df = get_transactions(user_id) #get_transactions("default")
-latest_price, latest_date = get_latest_price("3965.n")
+transactions_df = get_transactions(user_id)
+
+# Ceny per fundusz — używane w podpowiedzi formularza i metrykach
+fund_price_lookup: dict[str, tuple[float, str]] = {}
+for f in get_all_funds():
+    if f["stooq_ticker"]:
+        price, date_ = get_latest_price(f["stooq_ticker"])
+        fund_price_lookup[f["code"]] = (price, date_)
 
 # ── Metryki podsumowujące ─────────────────────────────────────────────────────
 if not transactions_df.empty:
-    summary = get_portfolio_summary(transactions_df, latest_price)
-    #count of different fund codes in transactions_df which status is BUY
+    total_invested_all = total_value_all = 0.0
+    for code, group in transactions_df.groupby("fund_code"):
+        price, _ = fund_price_lookup.get(code, (0.0, ""))
+        s = get_portfolio_summary(group, price)
+        total_invested_all += s["total_invested"]
+        total_value_all    += s["current_value"]
+    total_profit_all = total_value_all - total_invested_all
+    total_profit_pct = (total_profit_all / total_invested_all * 100) if total_invested_all else 0.0
     fund_types_amount = transactions_df[transactions_df["type"] == "BUY"]["fund_code"].nunique()
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Liczba transakcji", len(transactions_df))
+    col1.metric("Liczba transakcji",          len(transactions_df))
     col2.metric("Liczba posiadanych funduszy", fund_types_amount)
-    col3.metric("Zainwestowano", f"{summary['total_invested']:,.2f} PLN")
-    col4.metric(
-        "Zysk / Strata",
-        f"{summary['profit_pln']:,.2f} PLN",
-        delta=f"{summary['profit_pct']:.2f}%"
-    )
+    col3.metric("Zainwestowano",              f"{total_invested_all:,.2f} PLN")
+    col4.metric("Zysk / Strata",              f"{total_profit_all:,.2f} PLN",
+                delta=f"{total_profit_pct:.2f}%")
 
 st.divider()
 
@@ -63,14 +72,10 @@ col_form, col_table = st.columns([1, 1.4], gap="large")
 with col_form:
     st.subheader("Dodaj transakcję")
 
-    # Pobierz listę funduszy z bazy
-    conn = get_connection()
-    funds_df = pd.read_sql("SELECT code, name FROM funds ORDER BY name", conn)
-    conn.close()
-
+    all_funds_list = get_all_funds()
     fund_options = {
-        f"{row['name']} ({row['code']})": row['code']
-        for _, row in funds_df.iterrows()
+        f"{f['name']} ({f['code']})": f["code"]
+        for f in all_funds_list
     }
 
     with st.form("add_transaction_form", clear_on_submit=True):
@@ -109,7 +114,7 @@ with col_form:
                 min_value=0.01,
                 step=0.01,
                 format="%.2f",
-                help=f"Ostatnia wycena: {latest_price:.2f} PLN ({latest_date})"
+                help=f"Ostatnia wycena: {fund_price_lookup.get(selected_fund_code, (0.0, 'brak danych'))[0]:.2f} PLN ({fund_price_lookup.get(selected_fund_code, (0.0, 'brak danych'))[1]})"
             )
         with col_notes:
             notes = st.text_input(
@@ -133,11 +138,12 @@ with col_form:
             elif price_per_unit <= 0:
                 st.error("Cena jednostki musi być większa niż 0.")
             elif transaction_type == "SELL":
-                # Sprawdź czy masz wystarczająco jednostek do sprzedaży
-                current_txns = get_transactions(user_id) #get_transactions("default")
-                if not current_txns.empty:
-                    bought = current_txns[current_txns["type"] == "BUY"]["units"].sum()
-                    sold   = current_txns[current_txns["type"] == "SELL"]["units"].sum()
+                # Sprawdź czy masz wystarczająco jednostek tego funduszu
+                current_txns = get_transactions(user_id)
+                fund_txns = current_txns[current_txns["fund_code"] == selected_fund_code] if not current_txns.empty else current_txns
+                if not fund_txns.empty:
+                    bought    = fund_txns[fund_txns["type"] == "BUY"]["units"].sum()
+                    sold      = fund_txns[fund_txns["type"] == "SELL"]["units"].sum()
                     available = bought - sold
                 else:
                     available = 0.0

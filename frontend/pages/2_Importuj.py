@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 import pandas as pd
 
-from backend.database.db import init_db, get_connection
+from backend.database.db import init_db, get_connection, get_all_funds
 from backend.services.transactions import get_transactions, add_transaction
 from backend.services.auth import get_current_user, show_auth_page, logout
 
@@ -54,7 +54,7 @@ with col_req:
 | Kolumna | Format | Przykład |
 |---|---|---|
 | `date` | YYYY-MM-DD | 2024-03-15 |
-| `fund_code` | tekst | UNI23 |
+| `fund_code` | tekst | (kod z tabeli poniżej) |
 | `type` | BUY lub SELL | BUY |
 | `units` | liczba | 10.5 |
 | `price_per_unit` | liczba | 245.20 |
@@ -83,10 +83,14 @@ with col_opt:
             hide_index=True
         )
 
-template_csv = """date,fund_code,type,units,price_per_unit,notes
-2024-03-15,UNI23,BUY,10.5,245.20,pierwsza wpłata
-2024-06-01,UNI23,BUY,5.0,251.80,
-2024-09-10,UNI23,SELL,2.0,268.40,częściowa sprzedaż
+_fund_codes = [f["code"] for f in get_all_funds()]
+_c0 = _fund_codes[0] if _fund_codes else "FUNDXX"
+_c1 = _fund_codes[1] if len(_fund_codes) > 1 else _c0
+
+template_csv = f"""date,fund_code,type,units,price_per_unit,notes
+2024-03-15,{_c0},BUY,10.5,245.20,pierwsza wpłata
+2024-06-01,{_c0},BUY,5.0,251.80,
+2024-09-10,{_c1},SELL,2.0,268.40,częściowa sprzedaż
 """
 
 col1, col2, col3 = st.columns(3)
@@ -202,7 +206,7 @@ if uploaded_file is not None:
 
         else:
             # Wykryj duplikaty
-            existing_df = get_transactions(user_id) #get_transactions("default")
+            existing_df = get_transactions(user_id)
             duplicates = 0
 
             if not existing_df.empty:
@@ -269,7 +273,7 @@ if uploaded_file is not None:
                                 continue
 
                         add_transaction(
-                            user_id="default",
+                            user_id=user_id,
                             fund_code=row["fund_code"],
                             type=row["type"],
                             date=row["date"],
