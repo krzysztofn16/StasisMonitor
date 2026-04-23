@@ -40,6 +40,7 @@ def _filter_by_period(df: pd.DataFrame, period: str) -> pd.DataFrame:
         "6M": today - pd.DateOffset(months=6),
         "1Y": today - pd.DateOffset(years=1),
         "2Y": today - pd.DateOffset(years=2),
+        "5Y": today - pd.DateOffset(years=5),
     }
     cutoff = cutoffs.get(period, cutoffs["1Y"])
     return df[df["date"] >= cutoff].reset_index(drop=True)

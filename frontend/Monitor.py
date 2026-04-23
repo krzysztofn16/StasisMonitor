@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
 
 import sys
 import os
@@ -82,37 +83,41 @@ st.subheader("Wartość portfela w czasie")
 
 period = st.radio(
     label="Okres",
-    options=["1M", "3M", "6M", "1Y", "2Y", "MAX"],
-    index=0,          # domyślnie 1M
+    options=["1M", "3M", "6M", "1Y", "2Y", "5Y", "MAX"],
+    index=1,          # domyślnie 3M
     horizontal=True
 )
 
 prices_df = get_price_history("3965.n", period=period)
 history_df = get_portfolio_history(transactions_df, prices_df)
 
-st.write("Transakcje:")
-st.write(transactions_df[["date", "type", "units"]].head())
-st.write(f"Typ daty transakcji: {transactions_df['date'].dtype}")
-
-st.write("Ceny:")
-st.write(prices_df[["date", "price"]].head())
-st.write(f"Typ daty cen: {prices_df['date'].dtype}")
-
-st.write("Historia:")
-st.write(history_df.head())
-
 if not history_df.empty:
-    fig = px.line(
-        history_df,
-        x="date",
-        y="value",
-        labels={"date": "", "value": "Wartość (PLN)"},
-    )
-    fig.update_traces(line_color="#2E75B6", line_width=2)
+    fig = go.Figure()
+
+    # Linia — zainwestowano (baseline)
+    fig.add_trace(go.Scatter(
+        x=history_df["date"],
+        y=history_df["invested"],
+        name="Zainwestowano",
+        line=dict(color="#888888", width=2, dash="dot")
+    ))
+
+    # Linia — wartość portfela
+    fig.add_trace(go.Scatter(
+        x=history_df["date"],
+        y=history_df["value"],
+        name="Wartość portfela",
+        line=dict(color="#2E75B6", width=2),
+        fill="tonexty",
+        fillcolor="rgba(39, 174, 96, 0.1)"
+    ))
+
     fig.update_layout(
         hovermode="x unified",
-        margin=dict(l=0, r=0, t=0, b=0)
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        margin=dict(l=0, r=0, t=30, b=0)
     )
+
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()

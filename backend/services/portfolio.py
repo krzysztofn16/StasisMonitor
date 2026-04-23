@@ -24,7 +24,8 @@ def get_avg_buy_price(transactions_df: pd.DataFrame) -> float:
 def get_total_invested(transactions_df: pd.DataFrame) -> float:
     """Łączna kwota zainwestowana (tylko BUY)"""
     buys = transactions_df[transactions_df["type"] == "BUY"]
-    return (buys["units"] * buys["price_per_unit"]).sum()
+    sells = transactions_df[transactions_df["type"] == "SELL"]
+    return (buys["units"] * buys["price_per_unit"]).sum() - (sells["units"] * sells["price_per_unit"]).sum()
 
 
 def get_portfolio_summary(transactions_df: pd.DataFrame, latest_price: float) -> dict:
@@ -54,7 +55,7 @@ def get_portfolio_history(transactions_df: pd.DataFrame, prices_df: pd.DataFrame
     i mnoży przez cenę z tego dnia.
     """
     if transactions_df.empty or prices_df.empty:
-        return pd.DataFrame(columns=["date", "value"])
+        return pd.DataFrame(columns=["date", "value", "invested"])
 
     transactions_df = transactions_df.copy()
     transactions_df["date"] = pd.to_datetime(transactions_df["date"])
@@ -62,20 +63,33 @@ def get_portfolio_history(transactions_df: pd.DataFrame, prices_df: pd.DataFrame
     prices_df = prices_df.copy()
     prices_df["date"] = pd.to_datetime(prices_df["date"])
 
+    today = pd.Timestamp.today().normalize()
+    last_price = prices_df.iloc[-1]["price"]
+    last_date = prices_df.iloc[-1]["date"]
+
+    if last_date < today:
+        today_row = pd.DataFrame([{"date": today, "price": last_price}])
+        prices_df = pd.concat([prices_df, today_row], ignore_index=True)
+
     rows = []
     for _, price_row in prices_df.iterrows():
         day = price_row["date"]
-
-        # Transakcje DO tego dnia włącznie
         txns_to_date = transactions_df[transactions_df["date"] <= day]
 
-        bought = txns_to_date[txns_to_date["type"] == "BUY"]["units"].sum()
-        sold   = txns_to_date[txns_to_date["type"] == "SELL"]["units"].sum()
-        units  = bought - sold
+        bought       = txns_to_date[txns_to_date["type"] == "BUY"]["units"].sum()
+        sold         = txns_to_date[txns_to_date["type"] == "SELL"]["units"].sum()
+        units        = bought - sold
+
+        # Łączna zainwestowana kwota do tego dnia
+        invested = (
+            txns_to_date[txns_to_date["type"] == "BUY"]["total_value"].sum() -
+            txns_to_date[txns_to_date["type"] == "SELL"]["total_value"].sum()
+        )
 
         rows.append({
-            "date":  day,
-            "value": units * price_row["price"]
+            "date":     day,
+            "value":    units * price_row["price"],
+            "invested": invested
         })
 
     return pd.DataFrame(rows)
