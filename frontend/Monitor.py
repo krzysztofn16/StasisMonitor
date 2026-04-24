@@ -37,8 +37,8 @@ with st.sidebar:
     if st.button("wyloguj", use_container_width=True):
         logout()
     st.divider()
-    st.markdown("[📝 Prześlij feedback](https://forms.google.com/)")
-    st.markdown("[☕ Postaw kawę zeby to rozwijać po godzinach 😏](https://buymeacoffee.com/)")
+    st.markdown("[📝 Prześlij feedback](https://forms.gle/uDh9U5EAzcZ2s3yP6)")
+    st.markdown("[☕ Postaw kawę zeby to rozwijać po godzinach 😏](https://buymeacoffee.com/monitorsti)")
 
 st.title("📊 MarketSTI Monitor")
 
