@@ -19,10 +19,13 @@ def _fetch_raw(stooq_ticker: str) -> pd.DataFrame:
 
     df = pd.read_csv(io.StringIO(r.text))
 
-    # Kolumny są po polsku — standaryzujemy
-    df.columns = ["date", "open", "high", "low", "close"]
+    # Stooq returns 5+ columns for funds but may return fewer for indices.
+    # Normalize to lowercase and grab date (first col) + close (last col) by position.
+    df.columns = [c.strip().lower() for c in df.columns]
+    date_col = df.columns[0]
+    close_col = df.columns[-1]
+    df = df[[date_col, close_col]].rename(columns={date_col: "date", close_col: "price"})
     df["date"] = pd.to_datetime(df["date"])
-    df = df[["date", "close"]].rename(columns={"close": "price"})
     df = df.sort_values("date").reset_index(drop=True)
 
     return df
