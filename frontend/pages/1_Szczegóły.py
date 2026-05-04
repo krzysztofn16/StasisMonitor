@@ -79,10 +79,13 @@ fund_pct_of_wallet = (
 
 # ── Tytuł ─────────────────────────────────────────────────────────────────────
 st.title(f"🏦 {fund['name']}")
-st.caption(
-    f"Kod: **{fund['code']}** · Ticker: `{fund['stooq_ticker']}` "
-    f"· Ostatnia wycena: **{latest_price:.2f} PLN** ({latest_date})"
-)
+st.markdown(f"""
+**Kod:** `{fund['code']}` | **Ticker:** `{fund['stooq_ticker']}` | **Ostatnia wycena:** {latest_price:.2f} PLN ({latest_date})
+""")
+
+st.markdown("""
+Szczegółowa analiza wybranego funduszu z portfela. Poniżej znajdziesz wykresy, metryki ryzyka i porównanie z benchmarkiem.
+""")
 
 st.divider()
 

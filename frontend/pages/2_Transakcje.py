@@ -21,7 +21,12 @@ if user_id is None:
     st.stop()
 
 st.set_page_config(page_title="Transakcje — MarketSTI Monitor", page_icon="📋", layout="wide")
+
 st.title("📋 Transakcje")
+
+st.markdown("""
+Zarządzaj swoimi transakcjami kupna i sprzedaży. Dodawaj nowe pozycje, śledź historię i eksportuj dane do CSV.
+""")
 
 # ── Sidebar — info o użytkowniku ──────────────────────────────────────────────
 with st.sidebar:
@@ -44,6 +49,8 @@ for f in get_all_funds():
         fund_price_lookup[f["code"]] = (price, date_)
 
 # ── Metryki podsumowujące ─────────────────────────────────────────────────────
+st.subheader("📊 Podsumowanie")
+
 if not transactions_df.empty:
     total_invested_all = total_value_all = 0.0
     for code, group in transactions_df.groupby("fund_code"):
@@ -56,11 +63,13 @@ if not transactions_df.empty:
     fund_types_amount = transactions_df[transactions_df["type"] == "BUY"]["fund_code"].nunique()
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Liczba transakcji",          len(transactions_df))
-    col2.metric("Liczba posiadanych funduszy", fund_types_amount)
-    col3.metric("Zainwestowano",              f"{total_invested_all:,.2f} PLN")
-    col4.metric("Zysk / Strata",              f"{total_profit_all:,.2f} PLN",
+    col1.metric("📈 Liczba transakcji",          len(transactions_df))
+    col2.metric("🏦 Liczba posiadanych funduszy", fund_types_amount)
+    col3.metric("💰 Zainwestowano",              f"{total_invested_all:,.2f} PLN")
+    col4.metric("💹 Zysk / Strata",              f"{total_profit_all:,.2f} PLN",
                 delta=f"{total_profit_pct:.2f}%")
+else:
+    st.info("📭 Brak transakcji. Dodaj swoją pierwszą transakcję poniżej!")
 
 st.divider()
 
@@ -71,7 +80,11 @@ col_form, col_table = st.columns([1, 1.4], gap="large")
 # LEWA STRONA — formularz dodawania
 # ══════════════════════════════════════════════════════════
 with col_form:
-    st.subheader("Dodaj transakcję")
+    st.subheader("➕ Nowa transakcja")
+    
+    st.markdown("""
+    Dodaj nową transakcję kupna lub sprzedaży do swojego portfela.
+    """)
 
     all_funds_list = get_all_funds()
     fund_options = {
@@ -183,12 +196,12 @@ with col_table:
 
     header_col, export_col = st.columns([3, 1])
     with header_col:
-        st.subheader("Historia transakcji")
+        st.subheader("📜 Historia transakcji")
     with export_col:
         if not transactions_df.empty:
             csv = transactions_df.to_csv(index=False)
             st.download_button(
-                label="📥 Eksportuj CSV",
+                label="📥 CSV",
                 data=csv,
                 file_name="fund_tracker_backup.csv",
                 mime="text/csv",
@@ -196,7 +209,7 @@ with col_table:
             )
 
     if transactions_df.empty:
-        st.info("Brak transakcji. Dodaj pierwszą używając formularza po lewej.")
+        st.info("📭 Brak transakcji. Dodaj pierwszą używając formularza po lewej.")
     else:
         # Przygotuj czytelną tabelę do wyświetlenia
         display_df = transactions_df[["id", "date", "fund_code", "type", "units", "price_per_unit", "total_value", "notes"]].copy()
