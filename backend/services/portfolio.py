@@ -1,4 +1,6 @@
 import pandas as pd
+from backend.database.db import get_connection
+
 
 def get_units_held(transactions_df: pd.DataFrame) -> float:
     """Ile jednostek aktualnie posiadasz"""
@@ -93,3 +95,60 @@ def get_portfolio_history(transactions_df: pd.DataFrame, prices_df: pd.DataFrame
         })
 
     return pd.DataFrame(rows)
+
+
+def get_portfolio_allocation(fund_summaries: list[dict]) -> dict:
+    """
+    Oblicza rzeczywistą alokację portfela na podstawie fund_allocation table.
+    
+    Args:
+        fund_summaries: Lista słowników z danymi o funduszach (fund, summary, latest_price, latest_date)
+    
+    Returns:
+        Słownik z alokacją: {"Akcje": 35.5, "Obligacje": 60.0, "Gotówka": 4.5, ...}
+    """
+    if not fund_summaries:
+        return {}
+    
+    conn = get_connection()
+    
+    # Oblicz całkowitą wartość portfela
+    total_value = sum(f["summary"]["current_value"] for f in fund_summaries)
+    
+    if total_value == 0:
+        conn.close()
+        return {}
+    
+    # Zbierz alokacje dla każdej kategorii
+    allocation = {}
+    
+    for fund_data in fund_summaries:
+        fund_code = fund_data["fund"]["code"]
+        fund_value = fund_data["summary"]["current_value"]
+        
+        # Pobierz alokację dla tego funduszu z bazy
+        rows = conn.execute(
+            "SELECT category, percentage FROM fund_allocation WHERE fund_code = ?",
+            (fund_code,)
+        ).fetchall()
+        
+        # Dla każdej kategorii, oblicz jej udział w tym funduszu
+        for row in rows:
+            category = row["category"]
+            category_pct = row["percentage"]
+            
+            # Wkład tej kategorii z tego funduszu = wartość funduszu * % kategorii w funduszu
+            contribution = (fund_value * category_pct) / 100
+            
+            if category not in allocation:
+                allocation[category] = 0
+            allocation[category] += contribution
+    
+    conn.close()
+    
+    # Konwertuj na procenty (względem całego portfela)
+    allocation_pct = {}
+    for category, value in allocation.items():
+        allocation_pct[category] = round((value / total_value) * 100, 1)
+    
+    return allocation_pct
