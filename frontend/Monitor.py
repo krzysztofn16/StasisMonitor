@@ -41,6 +41,7 @@ with st.sidebar:
     st.markdown("[☕ Postaw kawę zeby to rozwijać po godzinach 😏](https://buymeacoffee.com/monitorsti)")
 
 st.title("📊 MarketSTI Monitor")
+st.markdown("Przegląd całego portfela w jednym miejscu — bieżąca wartość rynkowa, historia wzrostów oraz struktura alokacji między funduszami.")
 
 # ── Pobierz dane ──────────────────────────────────────────────────────────────
 transactions_df = get_transactions(user_id)
@@ -83,6 +84,7 @@ st.divider()
 
 # ── Wykres z przełącznikiem okresu ────────────────────────────────────────────
 st.subheader("Wartość portfela w czasie")
+st.caption("Łączna wartość rynkowa wszystkich funduszy na tle zainwestowanego kapitału. Zielone wypełnienie między liniami obrazuje skumulowany zysk lub stratę w wybranym przedziale czasu.")
 
 period = st.radio(
     label="Okres",
@@ -139,6 +141,7 @@ if not history_df.empty:
 st.divider()
 # ── Pie chart posiadanych aktywów ─────────────────────────────────────────────
 st.subheader("Struktura portfela")
+st.caption("Procentowy udział każdego funduszu w bieżącej wartości portfela, obliczony na podstawie aktualnych wycen rynkowych.")
 if held_funds:
     pie_data = pd.DataFrame({
         "Fundusz": [f["fund"]["name"] for f in fund_summaries],
@@ -175,6 +178,8 @@ else:
     st.info("Nie posiadasz żadnych funduszy w portfelu. Dodaj transakcje kupna żeby zacząć śledzić swój portfel.")
 
 # ── Metryki dla balansu struktury ─────────────────────────────────────────────
+st.subheader("Balans portfela")
+st.caption("Porównaj aktualną alokację kapitału z docelowym podziałem na klasy aktywów. Dostosuj suwaki zgodnie ze swoją strategią i sprawdź, o ile portfel odbiega od założonego celu.")
 
 # Get real portfolio allocation from database
 portfolio_allocation = get_portfolio_allocation(fund_summaries)
@@ -298,6 +303,7 @@ with col_score:
 st.divider()
 # ── Tabela podsumowania funduszu ──────────────────────────────────────────────
 st.subheader("Podsumowanie")
+st.caption("Zestawienie kluczowych parametrów każdego posiadanego funduszu: liczba jednostek, średnia cena zakupu na tle bieżącej wyceny oraz wynik inwestycji wyrażony kwotowo i procentowo.")
 
 rows = []
 for item in fund_summaries:
