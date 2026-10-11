@@ -19,6 +19,7 @@ if user_id is None:
 
 st.set_page_config(page_title="Import — MarketSTI Monitor", page_icon="📂", layout="wide")
 st.title("📂 Import transakcji")
+st.markdown("Wczytaj historię transakcji z pliku CSV lub Excel. Aplikacja weryfikuje poprawność danych, wykrywa duplikaty i pozwala ręcznie dopasować kolumny przed ostatecznym zapisem do bazy.")
 
 # ── Sidebar — info o użytkowniku ──────────────────────────────────────────────
 with st.sidebar:
@@ -44,6 +45,7 @@ st.divider()
 # INSTRUKCJA
 # ══════════════════════════════════════════════════════════
 st.subheader("Instrukcja")
+st.caption("Plik musi zawierać co najmniej 5 kolumn opisanych poniżej. Pobierz szablon CSV, aby zobaczyć przykładowy format przed przygotowaniem własnego pliku.")
 
 col_req, col_opt = st.columns(2)
 
@@ -109,6 +111,7 @@ st.divider()
 # UPLOAD
 # ══════════════════════════════════════════════════════════
 st.subheader("Wgraj plik")
+st.caption("Obsługiwane formaty: CSV (UTF-8) i Excel (.xlsx). Po wczytaniu pliku wyświetlony zostanie podgląd danych oraz możliwość ręcznego mapowania kolumn.")
 
 uploaded_file = st.file_uploader(
     "Wybierz plik CSV lub Excel",
@@ -137,7 +140,7 @@ if uploaded_file is not None:
 
     # ── Mapowanie kolumn ──────────────────────────────────────────────────────
     st.subheader("Mapowanie kolumn")
-    st.caption("Przypisz kolumny z pliku do pól wymaganych przez aplikację. Kolumny z pasującymi nazwami są dopasowane automatycznie.")
+    st.caption("Przypisz kolumny z wczytanego pliku do wymaganych pól aplikacji. Kolumny o zgodnych nazwach są dopasowywane automatycznie — pozostałe należy wybrać ręcznie z listy.")
 
     file_columns = ["— wybierz —"] + list(df_raw.columns)
 

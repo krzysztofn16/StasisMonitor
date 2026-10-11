@@ -24,9 +24,7 @@ st.set_page_config(page_title="Transakcje — MarketSTI Monitor", page_icon="�
 
 st.title("📋 Transakcje")
 
-st.markdown("""
-Zarządzaj swoimi transakcjami kupna i sprzedaży. Dodawaj nowe pozycje, śledź historię i eksportuj dane do CSV.
-""")
+st.markdown("Rejestr wszystkich operacji kupna i sprzedaży jednostek funduszy. Dodawaj transakcje ręcznie, przeglądaj pełną historię i eksportuj dane do pliku CSV jako kopię zapasową.")
 
 # ── Sidebar — info o użytkowniku ──────────────────────────────────────────────
 with st.sidebar:
@@ -50,6 +48,7 @@ for f in get_all_funds():
 
 # ── Metryki podsumowujące ─────────────────────────────────────────────────────
 st.subheader("📊 Podsumowanie")
+st.caption("Aktualne podsumowanie portfela obliczone na podstawie zarejestrowanych transakcji i bieżących wycen rynkowych.")
 
 if not transactions_df.empty:
     total_invested_all = total_value_all = 0.0
@@ -81,10 +80,7 @@ col_form, col_table = st.columns([1, 1.4], gap="large")
 # ══════════════════════════════════════════════════════════
 with col_form:
     st.subheader("➕ Nowa transakcja")
-    
-    st.markdown("""
-    Dodaj nową transakcję kupna lub sprzedaży do swojego portfela.
-    """)
+    st.caption("Wypełnij formularz, aby zarejestrować zakup lub sprzedaż jednostek. Aplikacja weryfikuje dostępność jednostek przed zapisem transakcji sprzedaży.")
 
     all_funds_list = get_all_funds()
     fund_options = {
@@ -197,6 +193,7 @@ with col_table:
     header_col, export_col = st.columns([3, 1])
     with header_col:
         st.subheader("📜 Historia transakcji")
+    st.caption("Pełna lista zarejestrowanych operacji posortowana według daty. Zakupy oznaczone są zielonym tłem, sprzedaże — czerwonym.")
     with export_col:
         if not transactions_df.empty:
             csv = transactions_df.to_csv(index=False)

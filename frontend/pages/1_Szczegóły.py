@@ -83,9 +83,7 @@ st.markdown(f"""
 **Kod:** `{fund['code']}` | **Ticker:** `{fund['stooq_ticker']}` | **Ostatnia wycena:** {latest_price:.2f} PLN ({latest_date})
 """)
 
-st.markdown("""
-Szczegółowa analiza wybranego funduszu z portfela. Poniżej znajdziesz wykresy, metryki ryzyka i porównanie z benchmarkiem.
-""")
+st.markdown("Szczegółowa analiza wybranego funduszu: historia wyceny z oznaczonymi transakcjami, porównanie wyników z benchmarkiem WIG20 oraz miary ryzyka obliczone dla wybranego okresu.")
 
 st.divider()
 
@@ -126,6 +124,7 @@ prices_df = get_price_history(fund["stooq_ticker"], period=period)
 
 # ── Wykres 1: Cena funduszu z transakcjami ────────────────────────────────────
 st.subheader("Cena funduszu i transakcje")
+st.caption("Historia wyceny jednostki funduszu z nałożonymi znacznikami Twoich transakcji. Trójkąty skierowane w górę oznaczają zakupy, skierowane w dół — sprzedaże.")
 
 if not prices_df.empty:
     buy_txns = fund_txns[fund_txns["type"] == "BUY"].copy()
@@ -213,6 +212,7 @@ st.divider()
 
 # ── Wykres 2: Porównanie do WIG20 ─────────────────────────────────────────────
 st.subheader("Porównanie do WIG20")
+st.caption("Znormalizowane zestawienie wyników funduszu i indeksu WIG20 od początku wybranego okresu (baza = 100). Wartości powyżej 100 oznaczają wzrost — różnica między liniami pokazuje, o ile fundusz wyprzedza lub przegrywa z szerokim rynkiem.")
 
 wig20_df = get_price_history("wig20", period=period)
 
@@ -281,6 +281,7 @@ st.divider()
 
 # ── Wykres 3: Drawdown ────────────────────────────────────────────────────────
 st.subheader("Spadek wyceny od szczytu (Drawdown)")
+st.caption("Procentowy spadek ceny funduszu względem historycznego maksimum z wybranego okresu. Im głębszy i dłuższy drawdown, tym wyższe ryzyko — wykres pomaga ocenić, ile czasu zajmuje funduszowi odrabianie strat.")
 
 if not prices_df.empty and len(prices_df) > 1:
     running_max = prices_df["price"].cummax()
@@ -314,6 +315,7 @@ st.divider()
 
 # ── Metryki ryzyka ────────────────────────────────────────────────────────────
 st.subheader("Metryki ryzyka")
+st.caption("Wskaźniki statystyczne obliczone na podstawie dziennych stóp zwrotu w wybranym okresie. Pozwalają ocenić zmienność funduszu oraz efektywność zarządzania ryzykiem w stosunku do osiąganego zwrotu.")
 
 if not prices_df.empty and len(prices_df) > 2:
     daily_returns = prices_df["price"].pct_change().dropna()

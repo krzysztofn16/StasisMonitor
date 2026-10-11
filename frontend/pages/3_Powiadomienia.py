@@ -38,15 +38,11 @@ with st.sidebar:
 
 st.title("🔔 Powiadomienia o funduszach")
 
-st.markdown("""
-Ustawiaj powiadomienia o cenach funduszów. Otrzymaj maila gdy:
-- 📉 Cena spadnie poniżej określonego progu (kupno)
-- 📈 Cena wzrośnie powyżej określonego progu (sprzedaż)
-- 📊 Fundusz zanotuje znaczący spadek (okazja)
-""")
+st.markdown("Zdefiniuj progi cenowe dla wybranych funduszy i otrzymuj powiadomienia e-mail, gdy cena osiągnie określony poziom — zarówno przy spadkach tworzących okazje zakupowe, jak i przy wzrostach sygnalizujących moment sprzedaży.")
 
 # ── Sekcja: Nowe powiadomienie ────────────────────────────────────────────────
 st.subheader("➕ Utwórz nowe powiadomienie")
+st.caption("Wybierz fundusz, określ warunek wyzwalający (cena minimalna, maksymalna lub procentowy spadek) i podaj adres e-mail, na który zostanie wysłane powiadomienie.")
 
 all_funds = {f["code"]: f for f in get_all_funds()}
 fund_codes = list(all_funds.keys())
@@ -144,6 +140,7 @@ st.divider()
 
 # ── Sekcja: Moje powiadomienia ────────────────────────────────────────────────
 st.subheader("📋 Twoje powiadomienia")
+st.caption("Lista aktywnych alertów przypisanych do Twojego konta. Każde powiadomienie jest weryfikowane automatycznie przy aktualizacji wycen funduszy.")
 
 alerts = get_user_alerts(user_id)
 
